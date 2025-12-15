@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rived - Upcycling Fashion Social Network
 
-## Getting Started
+**Rived** is a visual-first platform dedicated to the upcycling fashion community. It empowers creators to share their redesigns, discover inspiration, and connect with like-minded individuals.
 
-First, run the development server:
+## 🚀 Key Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+*   **Discovery Feed**: An infinite masonry grid of upcycled fashion designs.
+*   **Authentication**: Secure Login and Registration flow (JWT-based).
+*   **Create & Share**: Upload your own redesigns (`Drag & Drop`) with detailed descriptions and material lists.
+*   **Social Interaction**: Like and comment on designs to engage with the community.
+*   **Profile**: Manage your own portfolio of designs.
+
+## 🛠 Tech Stack
+
+*   **Framework**: [Next.js 14+](https://nextjs.org/) (App Router)
+*   **Language**: TypeScript
+*   **Styling**: [Tailwind CSS](https://tailwindcss.com/) + [Shadcn/ui](https://ui.shadcn.com/)
+*   **State Management**: [Zustand](https://github.com/pmndrs/zustand)
+*   **Data Fetching**: [TanStack Query](https://tanstack.com/query/latest)
+*   **Forms**: React Hook Form + Zod
+*   **Testing**: Vitest + React Testing Library
+
+## 🏁 Getting Started
+
+### Prerequisites
+
+*   Node.js 18+
+*   npm
+
+### Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-repo/fe-rived.git
+    cd fe-rived
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    # or
+    npm i --legacy-peer-deps (if conflicts arise)
+    ```
+
+3.  **Environment Setup:**
+    Create a `.env.local` file in the root directory:
+    ```env
+    NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+    NEXT_PUBLIC_SITE_URL=http://localhost:3000
+    ```
+
+4.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+
+    Open [http://localhost:3000](http://localhost:3000) to view the app.
+
+## 📂 Project Structure
+
+```
+src/
+├── app/
+│   ├── (auth)/        # Login/Register routes (Centered layout)
+│   ├── (main)/        # Public Feed & Details (Navbar layout)
+│   ├── (protected)/   # Auth-guarded routes (Create, Profile)
+│   └── layout.tsx     # Root layout with Providers
+├── components/
+│   ├── auth/          # Auth forms and guards
+│   ├── create/        # Upload & Creation widgets
+│   ├── design/        # Design details & Comments
+│   ├── main/          # Feed & Discovery components
+│   └── ui/            # Shadcn UI primitives
+├── lib/               # Utilities, API client, Zod schemas
+└── store/             # Global state (Auth)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🧪 Testing
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Run the test suite with:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm test
+```
 
-## Learn More
+## 🤝 Contributing
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Please read `docs/10_ONBOARDING_GUIDE.md` for details on how to add new features and follow the architectural standards.

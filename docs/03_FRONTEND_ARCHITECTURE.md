@@ -1,61 +1,58 @@
-# **Frontend Architecture**
+# 03. Frontend Architecture
 
-## **File Structure Strategy**
+## 1. Folder Structure
+We follow a feature-grouped structure within `src/`, differentiating between route groups for layout management.
 
-We follow a feature-grouped structure within the App Router, with a clear separation for protected routes.
+```
+src/
+├── app/
+│   ├── (auth)/          # Auth Layout (Center Card)
+│   │   ├── login/
+│   │   └── register/
+│   ├── (main)/          # Main Layout (Navbar + Content)
+│   │   ├── design/[id]/
+│   │   └── page.tsx     # Feed
+│   ├── (protected)/     # Protected Layout (Auth Guard)
+│   │   └── create/      # Design Creation
+│   ├── _not-found.tsx   # Custom 404
+│   ├── error.tsx        # Route Error Boundary
+│   ├── layout.tsx       # Root Layout (Fonts, Providers)
+│   └── globals.css
+├── components/
+│   ├── auth/            # AuthGuard, LoginForm, etc.
+│   ├── create/          # FileUpload, CreateDesignForm
+│   ├── design/          # DesignCard, CommentsSection
+│   ├── main/            # FilterBar, MasonryGrid
+│   └── ui/              # Shadcn components (Button, Input...)
+├── lib/                 # Shared utilities
+│   ├── api-client.ts    # Axios instance
+│   ├── types.ts         # Shared TS interfaces
+│   └── utils.ts         # cn helper
+└── store/
+    └── use-auth-store.ts # Zustand Persistence
+```
 
-* src/  
-* ├── app/  
-* │   ├── (auth)/                 \# Public: Login/Register (Clean layout)  
-* │   ├── (main)/                 \# Public: Home, Search, Design Details  
-* │   │   ├── layout.tsx          \# Providers \+ Navbar  
-* │   │   └── page.tsx  
-* │   ├── (protected)/            \# SECURE: Requires Authentication  
-* │   │   ├── layout.tsx          \# Wrapper with \<AuthGuard\>  
-* │   │   ├── create/             \# Create Design Page  
-* │   │   └── profile/me/         \# Edit Profile  
-* │   └── layout.tsx              \# Root Layout  
-* ├── components/  
-* │   ├── auth/  
-* │   │   ├── auth-guard.tsx      \# Client Component for route protection  
-* │   │   └── login-form.tsx      \# Zod-validated form  
-* │   ├── ui/                     \# Shadcn primitives (Toast, Dialog, etc.)  
-* │   └── features/               \# Feature-specific components  
-* ├── lib/  
-* │   ├── api-client.ts           \# Axios instance with Interceptors  
-* │   ├── schemas/                \# Zod Validation Schemas  
-* │   └── utils.ts  
-* ├── store/  
-* │   └── use-auth-store.ts       \# Zustand store for Auth State
+## 2. Key Patterns
 
-## **Authentication Flow**
+### Authentication (Zustand + Axios)
+*   **Store**: `useAuthStore` persists the JWT token and User object in `localStorage`.
+*   **Guard**: `<AuthGuard>` wraps protected routes locally or via Layout.
+*   **Interceptors**: `api-client.ts` automatically attaches `Authorization: Bearer [token]` header to requests.
 
-The app uses a client-side authentication strategy suitable for the MVP (JWT in LocalStorage).
+### Data Fetching (React Query)
+*   **Feed**: Uses `useInfiniteQuery` for the Masonry Feed.
+*   **Details**: Uses `useQuery` for fetching single design data.
+*   **Mutations**: `useMutation` for Actions (Login, Create, Like, Comment) with optimistic updates where appropriate.
 
-1. **State Management:**  
-   * Use **Zustand** (useAuthStore) to manage user, accessToken, and isAuthenticated status.  
-   * **Hydration:** On app mount (RootLayout), check localStorage for a token. If valid, set user state.  
-2. **Route Protection (\<AuthGuard\>):**  
-   * A client-side wrapper component used in (protected)/layout.tsx.  
-   * **Logic:**  
-     * If isLoading, show a skeleton/spinner.  
-     * If \!isAuthenticated, redirect to /login?redirect=....  
-     * If isAuthenticated, render children.  
-3. **Token Expiration / 401 Errors:**  
-   * **Axios Interceptor:** Listen for 401 Unauthorized responses globally.  
-   * **Action:** If 401 occurs, clear the Zustand store/localStorage and redirect to login immediately with a "Session Expired" toast.
+### Component Architecture
+*   **Server vs Client**:
+    *   Pages are generally Client Components if they need `useAuthStore` or `useQuery` immediately.
+    *   Use `Suspense` for async boundaries.
+*   **UI Components**: Pure presentation components in `components/ui`.
+*   **Feature Components**: Business logic components in `components/[feature]`.
 
-## **Error Handling & Validation**
-
-User feedback must be immediate and clear.
-
-1. **Form Validation:**  
-   * **Tool:** **React Hook Form** \+ **Zod**.  
-   * **UX:** Display inline validation errors (e.g., "Email is required", "Password too short") in red text below inputs using FormMessage component.  
-2. **API Errors:**  
-   * **Tool:** **Sonner** (Shadcn Toast).  
-   * **Strategy:**  
-     * **Server Errors (500):** Show generic error toast: "Something went wrong. Please try again."  
-     * **Logic Errors (400/422):** Show specific message from backend detail field.  
-   * **React Query:** Use the onError callback in mutations to trigger these toasts globally or locally.  
-* 
+## 3. Error Handling
+*   **Global**: `<ErrorBoundary>` (Class-based) wraps the entire app in `src/app/layout.tsx`.
+*   **API**: Axios interceptors catch 401/403 errors.
+*   **Forms**: Zod schemas provide field-level validation errors.
+*   **Feedback**: `sonner` is used for ephemeral status messages (Success/Error toasts).

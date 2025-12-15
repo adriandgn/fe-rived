@@ -1,65 +1,61 @@
 # **API Contract & Interfaces**
 
-**Base URL:** http://localhost:8000/api/v1 (Environment Variable: NEXT\_PUBLIC\_API\_URL)
+**Base URL:** http://localhost:8000/api/v1 (Environment Variable: `NEXT_PUBLIC_API_URL`)
 
 ## **Authentication**
 
-* **Mechanism:** Bearer Token (JWT).  
-* **Storage:** localStorage key: access\_token.
+*   **Mechanism:** Bearer Token (JWT).
+*   **Storage:** `localStorage` key: `access_token` (Managed by `useAuthStore`).
 
-## **TypeScript Interfaces (Source of Truth)**
+## **TypeScript Interfaces**
 
-1. // User & Profile  
-2. export interface User {  
-3.   id: string;  
-4.   email: string;  
-5.   username: string;  
-6. }  
-7.   
-8. export interface Profile {  
-9.   id: string;  
-10.   username: string;  
-11.   full\_name?: string;  
-12.   bio?: string;  
-13.   avatar\_url?: string; // Public URL  
-14. }  
-15.   
-16. // Design Content  
-17. export interface DesignImage {  
-18.   id: string;  
-19.   url: string; // Public URL  
-20.   is\_primary: boolean;  
-21. }  
-22.   
-23. export interface Design {  
-24.   id: string;  
-25.   title: string;  
-26.   description: string;  
-27.   materials: string;  
-28.   created\_at: string;  
-29.   user\_id: string;  
-30.   images: DesignImage\[\];  
-31.   // Assuming mapped from backend or separate call  
-32.   author?: Profile;   
-33.   stats?: {  
-34.     likes: number;  
-35.     comments: number;  
-36.     is\_liked\_by\_me: boolean; // Derived from interaction endpoint  
-37.   };  
-38. }  
-39.   
-40. // Pagination  
-41. export interface PaginatedResponse\<T\> {  
-42.   items: T\[\];  
-43.   total: number;  
-44.   page: number;  
-45.   size: number;  
-46. }
+The frontend types are defined in `src/lib/types.ts`. Below is a reference summary:
 
-## **Key Endpoints Map**
+```typescript
+export interface User {
+  id: string;
+  email: string;
+  username: string;
+  full_name?: string;
+  avatar_url?: string;
+  bio?: string;
+}
 
-1. **Feed:** GET /designs/?skip=0\&limit=20  
-2. **Design Detail:** GET /designs/{id}  
-3. **Like:** POST /designs/{id}/like  
-4. **Comments:** GET /designs/{id}/comments
+export interface Design {
+  id: string;
+  title: string;
+  description: string;
+  materials: string; // Comma-separated string
+  created_at: string;
+  user_id: string;
+  images: DesignImage[];
+  author?: Profile;
+  stats?: {
+    likes: number;
+    comments: number;
+    is_liked_by_me: boolean;
+  };
+}
 
+export interface Comment {
+    id: string;
+    content: string;
+    created_at: string;
+    user_id: string;
+    design_id: string;
+    author: Profile;
+}
+```
+
+## **Key Endpoints**
+
+| Feature | Method | Endpoint | Description |
+| :--- | :--- | :--- | :--- |
+| **Auth** | POST | `/auth/login` | Login user |
+| | POST | `/auth/register` | Register new user |
+| **Feed** | GET | `/designs` | Filterable list (`?q=&skip=&limit=`) |
+| **Design** | GET | `/designs/{id}` | Get details |
+| | POST | `/designs` | Create (`multipart/form-data`) |
+| **Interact** | POST | `/designs/{id}/like` | Toggle like |
+| | GET | `/designs/{id}/comments` | Get comments |
+| | POST | `/designs/{id}/comments` | Add comment |

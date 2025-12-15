@@ -1,27 +1,36 @@
-# **Technology Stack & Libraries**
+# 02. Technology Stack
 
-## **Core Framework**
+## 1. Core Framework
+*   **Next.js 14+ (App Router)**
+    *   Server Components for initial data fetching where possible.
+    *   Client Components for interactive UI (Zustand, React Query).
+*   **Language**: TypeScript 5+ (Strict Mode).
 
-* **Framework:** Next.js 14+ (App Router).  
-* **Language:** TypeScript 5+ (Strict Mode).  
-* **Package Manager:** npm or pnpm.
+## 2. Dependencies
 
-## **Styling & UI**
+### Styling & UI
+*   **Tailwind CSS**: Utility-first styling.
+*   **Shadcn/ui**: Reusable components based on Radix UI.
+*   **Lucide React**: Icon set.
+*   **clsx / tailwind-merge**: Conditional class merging.
 
-* **CSS Engine:** Tailwind CSS.  
-* **Component Library:** Shadcn/ui (Headless \+ Tailwind).  
-* **Icons:** Lucide React.  
-* **Font:** Inter (via next/font/google).
+### State & Data
+*   **Zustand**: Global client state (Authentication, User Profile).
+*   **TanStack Query (React Query)**: Server state management (Feed, Infinite Scroll, Caching).
+*   **Axios**: HTTP Client with interceptors for JWT handling.
+*   **react-intersection-observer**: For infinite scroll triggers.
 
-## **State Management & Data Fetching**
+### Forms & Validation
+*   **React Hook Form**: Performant form state.
+*   **Zod**: Schema validation (Login, Register, Create Design).
+*   **react-dropzone**: File upload handling.
 
-* **Server State:** TanStack Query (React Query) v5.  
-* **Client/Local State:** React Hooks (useState, useReducer) \+ URL Search Params.  
-* **Global App State:** Not required for MVP (URL is the source of truth).
+### Feedback & Utilities
+*   **Sonner**: Toast notifications.
+*   **date-fns**: Date formatting.
+*   **react-error-boundary**: Global error handling.
 
-## **Backend Integration**
-
-* **HTTP Client:** Axios or native Fetch wrapper.  
-* **Auth:** JWT Bearer Token (stored in localStorage for MVP).  
-* **Image Optimization:** next/image allowing external domains (Supabase Storage).
-
+## 3. Dev Tools
+*   **Vitest**: Unit testing framework.
+*   **React Testing Library**: Component testing.
+*   **ESLint / Prettier**: Code quality and formatting.
