@@ -14,8 +14,9 @@ export function useViewTracker(designId: string | undefined, delayMs = 2000) {
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        // If no design ID, do nothing
-        if (!designId) return;
+        // If no design ID or invalid format (prevent "create" or "edit" collisions)
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        if (!designId || !uuidRegex.test(designId)) return;
 
         const storageKey = `viewed_design_${designId}`;
 

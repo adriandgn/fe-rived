@@ -27,7 +27,7 @@ async function fetchDesign(id: string) {
 }
 
 async function fetchProfile(userId: string) {
-    const res = await apiClient.get<Profile>(`/profiles/${userId}/`); // Add trailing slash
+    const res = await apiClient.get<Profile>(`/profiles/${userId}`); // Standardized: No trailing slash
     return res.data;
 }
 
@@ -74,7 +74,7 @@ export default function DesignDetailsPage() {
         setLikesCount((prev: number) => (newIsLiked ? prev + 1 : prev - 1));
 
         try {
-            await apiClient.post(`/designs/${id}/like/`);
+            await apiClient.post(`/designs/${id}/like`);
         } catch (error) {
             setIsLiked(!newIsLiked);
             setLikesCount((prev: number) => (newIsLiked ? prev - 1 : prev + 1));

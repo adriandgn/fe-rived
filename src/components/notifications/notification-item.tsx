@@ -23,7 +23,13 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
 
         if (notification.link) {
             // Fix standard backend path /designs/ID to frontend /design/ID
-            const targetLink = notification.link.replace('/designs/', '/design/');
+            // Handle edge case where backend might send /designs/create (which shouldn't be /design/create)
+            let targetLink = notification.link.replace('/designs/', '/design/');
+
+            if (targetLink.includes('/design/create')) {
+                targetLink = '/create';
+            }
+
             router.push(targetLink);
         }
     };

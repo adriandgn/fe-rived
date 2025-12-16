@@ -56,7 +56,7 @@ export function DesignCard({ design }: DesignCardProps) {
 
         try {
             // API Contract specifies POST for toggle like.
-            await apiClient.post(`/designs/${design.id}/like/`);
+            await apiClient.post(`/designs/${design.id}/like`);
         } catch (error) {
             // Revert on error
             setIsLiked(!newIsLiked);

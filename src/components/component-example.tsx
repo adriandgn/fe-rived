@@ -6,6 +6,7 @@ import {
   Example,
   ExampleWrapper,
 } from "@/components/example"
+import { cn } from "@/lib/utils"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,7 +15,6 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogMedia,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
@@ -30,13 +30,18 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox"
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -65,7 +70,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { PlusIcon, BluetoothIcon, MoreVerticalIcon, FileIcon, FolderIcon, FolderOpenIcon, FileCodeIcon, MoreHorizontalIcon, FolderSearchIcon, SaveIcon, DownloadIcon, EyeIcon, LayoutIcon, PaletteIcon, SunIcon, MoonIcon, MonitorIcon, UserIcon, CreditCardIcon, SettingsIcon, KeyboardIcon, LanguagesIcon, BellIcon, MailIcon, ShieldIcon, HelpCircleIcon, FileTextIcon, LogOutIcon } from "lucide-react"
+import { Check, ChevronsUpDown, PlusIcon, BluetoothIcon, MoreVerticalIcon, FileIcon, FolderIcon, FolderOpenIcon, FileCodeIcon, MoreHorizontalIcon, FolderSearchIcon, SaveIcon, DownloadIcon, EyeIcon, LayoutIcon, PaletteIcon, SunIcon, MoonIcon, MonitorIcon, UserIcon, CreditCardIcon, SettingsIcon, KeyboardIcon, LanguagesIcon, BellIcon, MailIcon, ShieldIcon, HelpCircleIcon, FileTextIcon, LogOutIcon } from "lucide-react"
 
 export function ComponentExample() {
   return (
@@ -97,16 +102,17 @@ function CardExample() {
         </CardHeader>
         <CardFooter>
           <AlertDialog>
-            <AlertDialogTrigger render={<Button />}>
-              <PlusIcon data-icon="inline-start" />
-              Show Dialog
+            <AlertDialogTrigger asChild>
+              <Button>
+                <PlusIcon data-icon="inline-start" />
+                Show Dialog
+              </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent size="sm">
+            <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogMedia>
-                  <BluetoothIcon
-                  />
-                </AlertDialogMedia>
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
+                  <BluetoothIcon className="h-6 w-6 text-blue-600" />
+                </div>
                 <AlertDialogTitle>Allow accessory to connect?</AlertDialogTitle>
                 <AlertDialogDescription>
                   Do you want to allow the USB accessory to connect to this
@@ -150,6 +156,8 @@ function FormExample() {
     push: true,
   })
   const [theme, setTheme] = React.useState("light")
+  const [frameworkOpen, setFrameworkOpen] = React.useState(false)
+  const [frameworkValue, setFrameworkValue] = React.useState("")
 
   return (
     <Example title="Form">
@@ -159,12 +167,11 @@ function FormExample() {
           <CardDescription>Please fill in your details below</CardDescription>
           <CardAction>
             <DropdownMenu>
-              <DropdownMenuTrigger
-                render={<Button variant="ghost" size="icon" />}
-              >
-                <MoreVerticalIcon
-                />
-                <span className="sr-only">More options</span>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVerticalIcon />
+                  <span className="sr-only">More options</span>
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuGroup>
@@ -441,7 +448,7 @@ function FormExample() {
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="small-form-role">Role</FieldLabel>
-                  <Select items={roleItems} defaultValue={null}>
+                  <Select defaultValue="">
                     <SelectTrigger id="small-form-role">
                       <SelectValue />
                     </SelectTrigger>
@@ -461,23 +468,49 @@ function FormExample() {
                 <FieldLabel htmlFor="small-form-framework">
                   Framework
                 </FieldLabel>
-                <Combobox items={frameworks}>
-                  <ComboboxInput
-                    id="small-form-framework"
-                    placeholder="Select a framework"
-                    required
-                  />
-                  <ComboboxContent>
-                    <ComboboxEmpty>No frameworks found.</ComboboxEmpty>
-                    <ComboboxList>
-                      {(item) => (
-                        <ComboboxItem key={item} value={item}>
-                          {item}
-                        </ComboboxItem>
-                      )}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
+                <Popover open={frameworkOpen} onOpenChange={setFrameworkOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={frameworkOpen}
+                      className="w-full justify-between"
+                    >
+                      {frameworkValue
+                        ? frameworks.find((framework) => framework === frameworkValue)
+                        : "Select framework..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                    <Command>
+                      <CommandInput placeholder="Search framework..." />
+                      <CommandList>
+                        <CommandEmpty>No framework found.</CommandEmpty>
+                        <CommandGroup>
+                          {frameworks.map((framework) => (
+                            <CommandItem
+                              key={framework}
+                              value={framework}
+                              onSelect={(currentValue) => {
+                                setFrameworkValue(currentValue === frameworkValue ? "" : currentValue)
+                                setFrameworkOpen(false)
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  frameworkValue === framework ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {framework}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </Field>
               <Field>
                 <FieldLabel htmlFor="small-form-comments">Comments</FieldLabel>

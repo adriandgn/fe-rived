@@ -100,12 +100,18 @@ export function FileUpload({ value = [], onChange, className, disabled, maxFiles
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {value.map((file, index) => (
                         <div key={index} className="relative aspect-square border rounded-lg overflow-hidden group bg-background shadow-sm">
-                            <Image
-                                src={URL.createObjectURL(file)}
-                                alt={`Upload ${index + 1}`}
-                                fill
-                                className="object-cover"
-                            />
+                            {previews[index] ? (
+                                <Image
+                                    src={previews[index]}
+                                    alt={`Upload ${index + 1}`}
+                                    fill
+                                    className="object-cover"
+                                />
+                            ) : (
+                                <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">
+                                    <div className="h-4 w-4 rounded-full bg-muted-foreground/20" />
+                                </div>
+                            )}
                             <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Button
                                     type="button"
