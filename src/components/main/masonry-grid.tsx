@@ -10,10 +10,16 @@ import { DesignCard } from "./design-card";
 
 async function fetchDesigns({ pageParam = 0, queryKey }: any) {
     const [_, params] = queryKey;
+
+    // Filter out undefined values
+    const cleanParams = Object.fromEntries(
+        Object.entries(params).filter(([_, v]) => v !== undefined)
+    );
+
     const queryString = new URLSearchParams({
         skip: (pageParam * 20).toString(),
         limit: "20",
-        ...params
+        ...cleanParams
     }).toString();
 
     const res = await apiClient.get<PaginatedResponse<Design>>(`/designs/?${queryString}`);
