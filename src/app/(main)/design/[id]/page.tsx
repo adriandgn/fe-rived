@@ -209,7 +209,7 @@ export default function DesignDetailsPage() {
 
             <Separator className="my-8" />
 
-            <CommentsSection designId={id} />
+            <CommentsSection designId={id as string} />
         </div>
     );
 }
