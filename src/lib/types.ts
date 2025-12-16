@@ -36,6 +36,7 @@ export interface Comment {
 export interface DesignStats {
     likes: number;
     comments: number;
+    views: number;
     is_liked_by_me: boolean;
 }
 
@@ -53,17 +54,18 @@ export interface Design {
 
 export interface Notification {
     id: string;
-    type: "LIKE" | "COMMENT" | "SYSTEM";
-    sender?: Profile;
-    reference_id?: string; // design_id usually, optional for system
+    user_id: string;
+    type: 'info' | 'success' | 'warning' | 'error' | 'system';
+    title: string;
+    message: string;
+    link?: string;
     is_read: boolean;
     created_at: string;
-    metadata?: Record<string, any>;
 }
 
 export interface PaginatedResponse<T> {
     items: T[];
     total: number;
-    page: number;
-    size: number;
+    skip: number;
+    limit: number;
 }

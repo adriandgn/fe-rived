@@ -2,10 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, MessageCircle, Info } from "lucide-react";
+import { CheckCircle, AlertCircle, AlertTriangle, Info, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Notification } from "@/lib/types";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 interface NotificationItemProps {
@@ -17,69 +16,68 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
     const router = useRouter();
 
     const handleClick = () => {
-        onRead(notification.id);
+        // Optimistically mark as read handled by parent/mutation
+        if (!notification.is_read) {
+            onRead(notification.id);
+        }
 
-        if (notification.reference_id) {
-            router.push(`/design/${notification.reference_id}`);
+        if (notification.link) {
+            // Fix standard backend path /designs/ID to frontend /design/ID
+            const targetLink = notification.link.replace('/designs/', '/design/');
+            router.push(targetLink);
         }
     };
 
     const getIcon = () => {
         switch (notification.type) {
-            case "LIKE":
-                return <Heart className="h-4 w-4 text-red-500 fill-current" />;
-            case "COMMENT":
-                return <MessageCircle className="h-4 w-4 text-blue-500" />;
+            case "success":
+                return <CheckCircle className="h-4 w-4 text-green-500" />;
+            case "error":
+                return <AlertCircle className="h-4 w-4 text-red-500" />;
+            case "warning":
+                return <AlertTriangle className="h-4 w-4 text-amber-500" />; // Amber/Orange
+            case "info":
+                return <Info className="h-4 w-4 text-blue-500" />;
+            case "system":
+                return <Sparkles className="h-4 w-4 text-purple-600" />; // Purple Sparkle
             default:
                 return <Info className="h-4 w-4 text-gray-500" />;
-        }
-    };
-
-    const getMessage = () => {
-        const senderName = notification.sender?.full_name || notification.sender?.username || "Someone";
-        const designTitle = notification.metadata?.design_title || "your design";
-
-        switch (notification.type) {
-            case "LIKE":
-                return <span><span className="font-semibold">{senderName}</span> liked your design "{designTitle}"</span>;
-            case "COMMENT":
-                return <span><span className="font-semibold">{senderName}</span> commented on "{designTitle}"</span>;
-            case "SYSTEM":
-                return <span>{notification.metadata?.message || "System Notification"}</span>;
-            default:
-                return <span>New interaction</span>;
         }
     };
 
     return (
         <DropdownMenuItem
             className={cn(
-                "flex items-start gap-3 p-3 cursor-pointer focus:bg-accent",
-                !notification.is_read && "bg-muted/50 font-medium"
+                "flex items-start gap-3 p-3 cursor-pointer focus:bg-accent border-b last:border-0",
+                !notification.is_read ? "bg-blue-50/50 hover:bg-blue-50" : "bg-background"
             )}
             onClick={handleClick}
         >
-            <div className="relative mt-1">
-                <Avatar className="h-8 w-8 border">
-                    <AvatarImage src={notification.sender?.avatar_url} />
-                    <AvatarFallback>{notification.sender?.username?.charAt(0).toUpperCase() || "?"}</AvatarFallback>
-                </Avatar>
-                <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5 shadow-sm">
+            <div className="relative mt-1 shrink-0">
+                <div className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-full bg-muted shadow-sm",
+                    !notification.is_read && "ring-2 ring-background"
+                )}>
                     {getIcon()}
                 </div>
             </div>
 
-            <div className="flex flex-col gap-1 text-sm">
-                <div className="line-clamp-2 leading-snug">
-                    {getMessage()}
+            <div className="flex flex-col gap-1 text-sm flex-1 min-w-0">
+                <div className="flex justify-between items-start gap-2">
+                    <span className={cn("font-semibold text-xs", !notification.is_read ? "text-foreground" : "text-foreground/80")}>
+                        {notification.title}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">
+                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                    </span>
                 </div>
-                <span className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                </span>
+                <div className={cn("text-xs leading-snug line-clamp-2", !notification.is_read ? "text-foreground/90 font-medium" : "text-muted-foreground")}>
+                    {notification.message}
+                </div>
             </div>
 
             {!notification.is_read && (
-                <div className="ml-auto mt-2 h-2 w-2 rounded-full bg-primary shrink-0" />
+                <div className="mt-2 h-2 w-2 rounded-full bg-blue-600 shrink-0 self-center" />
             )}
         </DropdownMenuItem>
     );

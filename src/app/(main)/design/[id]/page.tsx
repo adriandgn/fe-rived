@@ -2,8 +2,9 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Heart, MessageSquare, Share2 } from "lucide-react";
+import { ArrowLeft, Heart, MessageSquare, Share2, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -16,7 +17,9 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { CommentsSection } from "@/components/design/comments-section";
+import { useViewTracker } from "@/hooks/use-view-tracker";
 import { ImageGallery } from "@/components/design/image-gallery";
+import { LikersDialog } from "@/components/design/likers-dialog";
 
 async function fetchDesign(id: string) {
     const res = await apiClient.get<Design>(`/designs/${id}`);
@@ -31,7 +34,10 @@ async function fetchProfile(userId: string) {
 export default function DesignDetailsPage() {
     const params = useParams();
     const router = useRouter();
-    const id = params.id as string;
+    const { id } = params;
+
+    // Track views with 2s delay
+    useViewTracker(id as string | undefined);
 
     const { user, isAuthenticated } = useAuthStore();
     const [isLiked, setIsLiked] = useState(false);
@@ -49,22 +55,6 @@ export default function DesignDetailsPage() {
         enabled: !!design?.user_id,
         retry: false
     });
-
-    useEffect(() => {
-        if (!design) return;
-        const interval = setInterval(() => {
-            let logMsg = "Unknown (Fetching...)";
-            if (author) {
-                logMsg = author.full_name || author.username || "Unknown Creator";
-            } else if (isError) {
-                // @ts-ignore
-                const status = authorError?.response?.status;
-                logMsg = `Error${status ? ` (${status})` : ""}`;
-            }
-            console.log(`[Design Owner]: ${logMsg}`);
-        }, 5000);
-        return () => clearInterval(interval);
-    }, [design, author, isError, authorError]);
 
     useEffect(() => {
         if (design) {
@@ -129,7 +119,7 @@ export default function DesignDetailsPage() {
 
     return (
         <div className="container mx-auto py-8 px-4 max-w-5xl">
-            <Button variant="ghost" className="mb-6 -ml-4" onClick={() => router.back()}>
+            <Button variant="ghost" className="mb-6 -ml-4" onClick={() => router.push('/')}>
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to Feed
             </Button>
 
@@ -141,22 +131,31 @@ export default function DesignDetailsPage() {
                 <div className="space-y-6">
                     <div>
                         <h1 className="text-3xl md:text-4xl font-bold mb-2">{design.title}</h1>
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                        <div className="flex items-center gap-4 text-muted-foreground text-sm">
                             <span>Posted {formatDistanceToNow(new Date(design.created_at), { addSuffix: true })}</span>
+                            <div className="flex items-center gap-1">
+                                <Eye className="h-4 w-4" />
+                                <span>{design.stats?.views || 0} views</span>
+                            </div>
                         </div>
                     </div>
 
                     <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border">
-                        <div className="flex items-center gap-3">
+                        <Link href={`/designer/${displayAuthor?.username}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                             <Avatar className="h-10 w-10">
                                 <AvatarImage src={displayAuthor?.avatar_url} />
                                 <AvatarFallback>{displayAuthor?.username?.substring(0, 1).toUpperCase() || "?"}</AvatarFallback>
                             </Avatar>
                             <div>
-                                <p className="text-sm font-semibold">{displayAuthor?.full_name || displayAuthor?.username || "Unknown Creator"}</p>
+                                <p className="text-sm font-semibold hover:underline decoration-primary">
+                                    {displayAuthor?.full_name || displayAuthor?.username || "Unknown Creator"}
+                                </p>
                                 <p className="text-xs text-muted-foreground">{displayAuthor?.bio || "Creator"}</p>
                             </div>
-                        </div>
+                        </Link>
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href={`/designer/${displayAuthor?.username}`}>View Profile</Link>
+                        </Button>
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -167,8 +166,15 @@ export default function DesignDetailsPage() {
                             onClick={handleLike}
                         >
                             <Heart className={cn("h-5 w-5", isLiked && "fill-current")} />
-                            {isLiked ? "Liked" : "Like"} ({likesCount})
+                            {isLiked ? "Liked" : "Like"}
                         </Button>
+                        <LikersDialog designId={id as string}>
+                            <Button variant="ghost" className="hover:bg-transparent px-2">
+                                <span className="underline cursor-pointer decoration-dotted underline-offset-4 text-muted-foreground hover:text-foreground">
+                                    ({likesCount} likes)
+                                </span>
+                            </Button>
+                        </LikersDialog>
                         <Button size="lg" variant="outline" className="flex-1 gap-2" onClick={handleComment}>
                             <MessageSquare className="h-5 w-5" /> Comment
                         </Button>

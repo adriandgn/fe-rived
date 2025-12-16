@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart } from "lucide-react";
+import { Heart, Eye } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -108,9 +108,15 @@ export function DesignCard({ design }: DesignCardProps) {
                         </Avatar>
                         <span className="truncate max-w-[80px]">{displayAuthor?.username || "Unknown"}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Heart className="h-3 w-3" />
-                        <span>{likesCount}</span>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                            <Eye className="h-3 w-3" />
+                            <span>{design.stats?.views || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Heart className="h-3 w-3" />
+                            <span>{likesCount}</span>
+                        </div>
                     </div>
                 </CardFooter>
             </Card>
