@@ -61,7 +61,7 @@ export function CreateDesignForm() {
             });
 
             // Single atomic request
-            const response = await apiClient.post("/designs/", formData, {
+            const response = await apiClient.post("/designs", formData, {
                 headers: {
                     // Browser sets multipart/form-data with boundary automatically
                     // We just need to ensure we don't force application/json

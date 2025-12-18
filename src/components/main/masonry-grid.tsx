@@ -22,7 +22,7 @@ async function fetchDesigns({ pageParam = 0, queryKey }: any) {
         ...cleanParams
     }).toString();
 
-    const res = await apiClient.get<PaginatedResponse<Design>>(`/designs/?${queryString}`);
+    const res = await apiClient.get<PaginatedResponse<Design>>(`/designs?${queryString}`);
     return res.data;
 }
 
