@@ -19,14 +19,20 @@ async function fetchLikers(designId: string) {
     return res.data;
 }
 
+import { useState } from "react";
+// ... existing imports
+
 export function LikersDialog({ designId, children }: LikersDialogProps) {
+    const [isOpen, setIsOpen] = useState(false);
+
     const { data: likers, isLoading } = useQuery({
         queryKey: ["likers", designId],
         queryFn: () => fetchLikers(designId),
+        enabled: isOpen,
     });
 
     return (
-        <Dialog>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>

@@ -18,6 +18,7 @@ import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 
 interface CommentsSectionProps {
     designId: string;
+    initialComments?: Comment[];
 }
 
 const commentSchema = z.object({
@@ -37,13 +38,15 @@ async function fetchComments(designId: string) {
     }));
 }
 
-export function CommentsSection({ designId }: CommentsSectionProps) {
+export function CommentsSection({ designId, initialComments }: CommentsSectionProps) {
     const { user, isAuthenticated } = useAuthStore();
     const queryClient = useQueryClient();
 
     const { data: comments, isLoading } = useQuery({
         queryKey: ["comments", designId],
         queryFn: () => fetchComments(designId),
+        initialData: initialComments,
+        staleTime: initialComments ? 30000 : 0,
     });
 
     const form = useForm<CommentValues>({

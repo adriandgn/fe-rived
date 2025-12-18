@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
         hostname: "fake.url",
       },
       {
+        protocol: "http",
+        hostname: "example.com",
+      },
+      {
         protocol: "https",
         hostname: "**",
       },

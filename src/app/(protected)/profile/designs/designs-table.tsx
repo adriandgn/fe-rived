@@ -120,6 +120,7 @@ export function DesignsTable({ designs }: DesignsTableProps) {
                                                     alt={design.title}
                                                     fill
                                                     className="object-cover"
+                                                    sizes="64px"
                                                 />
                                             ) : (
                                                 <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">

@@ -160,6 +160,7 @@ export function EditDesignForm({ design }: EditDesignFormProps) {
                                         alt="Design image"
                                         fill
                                         className="object-cover"
+                                        sizes="(max-width: 768px) 50vw, 25vw"
                                     />
                                     <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Button

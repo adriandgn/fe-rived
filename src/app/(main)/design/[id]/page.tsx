@@ -52,7 +52,7 @@ export default function DesignDetailsPage() {
     const { data: author, isError, error: authorError } = useQuery({
         queryKey: ["profile", design?.user_id],
         queryFn: () => fetchProfile(design!.user_id),
-        enabled: !!design?.user_id,
+        enabled: !!design?.user_id && !design.author,
         retry: false
     });
 
@@ -209,7 +209,7 @@ export default function DesignDetailsPage() {
 
             <Separator className="my-8" />
 
-            <CommentsSection designId={id as string} />
+            <CommentsSection designId={id as string} initialComments={design.comments} />
         </div>
     );
 }

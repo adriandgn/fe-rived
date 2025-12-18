@@ -7,6 +7,8 @@ import { useSearchParams } from "next/navigation";
 import { apiClient } from "@/lib/api-client";
 import { Design, PaginatedResponse } from "@/lib/types";
 import { DesignCard } from "./design-card";
+import Masonry from "react-masonry-css";
+import { DesignCardSkeleton } from "./design-card-skeleton";
 
 async function fetchDesigns({ pageParam = 0, queryKey }: any) {
     const [_, params] = queryKey;
@@ -57,15 +59,33 @@ export function MasonryGrid() {
         }
     }, [inView, fetchNextPage, hasNextPage]);
 
+    const designs = data?.pages.flatMap((page) => page.items) || [];
+    const skeletons = Array.from({ length: 12 }, (_, i) => i); // 12 Skeletons for initial load/next page
+
+    const breakpointColumnsObj = {
+        default: 4,
+        1023: 3,
+        767: 2
+    };
+
+    // Initial Loading State
     if (status === "pending") {
-        return <div className="text-center py-10">Loading feed...</div>;
+        return (
+            <Masonry
+                breakpointCols={breakpointColumnsObj}
+                className="flex -ml-4 w-auto"
+                columnClassName="pl-4 bg-clip-padding"
+            >
+                {skeletons.map((i) => (
+                    <DesignCardSkeleton key={`skeleton-${i}`} />
+                ))}
+            </Masonry>
+        );
     }
 
     if (status === "error") {
         return <div className="text-center py-10 text-red-500">Error loading designs.</div>;
     }
-
-    const designs = data?.pages.flatMap((page) => page.items) || [];
 
     if (designs.length === 0) {
         return <div className="text-center py-10 text-muted-foreground">No designs found.</div>;
@@ -73,15 +93,25 @@ export function MasonryGrid() {
 
     return (
         <div>
-            <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-                {designs.map((design) => (
-                    <DesignCard key={design.id} design={design} />
+            <Masonry
+                breakpointCols={breakpointColumnsObj}
+                className="flex -ml-4 w-auto"
+                columnClassName="pl-4 bg-clip-padding"
+            >
+                {designs.map((design, index) => (
+                    <DesignCard key={design.id} design={design} priority={index < 4} />
                 ))}
-            </div>
 
-            <div ref={ref} className="h-10 flex items-center justify-center mt-8">
-                {isFetchingNextPage && <div className="animate-spin h-5 w-5 border-b-2 border-primary rounded-full"></div>}
-            </div>
+                {/* Append Skeletons when fetching next page */}
+                {isFetchingNextPage && skeletons.map((i) => (
+                    <DesignCardSkeleton key={`skeleton-next-${i}`} />
+                ))}
+            </Masonry>
+
+            {/* Invisible element to watch for intersection, kept if we want to trigger earlier or standard way, 
+                 but if we append skeletons, the observer might need to be at the bottom of them? 
+                 Actually, usually we put the ref div at the very bottom. */}
+            <div ref={ref} className="h-4 w-full" />
         </div>
     );
 }

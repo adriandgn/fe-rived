@@ -31,8 +31,7 @@ export function NotificationBell() {
             const res = await apiClient.get<{ count: number }>("/notifications/unread-count");
             return res.data;
         },
-        refetchInterval: 30000,
-        staleTime: 25000,
+        staleTime: Infinity,
         retry: false,
     });
 
@@ -59,7 +58,7 @@ export function NotificationBell() {
             const nextSkip = allPages.length * 10;
             return nextSkip < lastPage.total ? nextSkip : undefined;
         },
-        enabled: isOpen,
+        staleTime: Infinity,
     });
 
     // Mark as read mutation with Optimistic Update

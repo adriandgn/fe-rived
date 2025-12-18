@@ -50,6 +50,7 @@ export interface Design {
     images: DesignImage[];
     author?: Profile;
     stats?: DesignStats;
+    comments?: Comment[];
 }
 
 export interface Notification {
@@ -68,4 +69,17 @@ export interface PaginatedResponse<T> {
     total: number;
     skip: number;
     limit: number;
+}
+
+export interface UserStats {
+    total_designs: number;
+    total_likes: number;
+    total_views: number;
+    followers_count: number;
+    following_count: number;
+}
+
+export interface DesignerProfile extends Profile {
+    stats: UserStats;
+    designs: PaginatedResponse<Design>;
 }

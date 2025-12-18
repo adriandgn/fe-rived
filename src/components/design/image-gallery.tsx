@@ -39,6 +39,7 @@ export function ImageGallery({ images, title, className }: ImageGalleryProps) {
                         fill
                         className="object-cover transition-all duration-300"
                         priority
+                        sizes="(max-width: 768px) 100vw, 50vw"
                     />
                 )}
             </div>
@@ -62,6 +63,7 @@ export function ImageGallery({ images, title, className }: ImageGalleryProps) {
                                 alt="Thumbnail"
                                 fill
                                 className="object-cover"
+                                sizes="80px"
                             />
                         </button>
                     ))}

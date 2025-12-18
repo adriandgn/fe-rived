@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, Eye } from "lucide-react";
+import { Heart, Eye, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -17,6 +17,7 @@ import { useAuthStore } from "@/store/use-auth-store";
 
 interface DesignCardProps {
     design: Design;
+    priority?: boolean;
 }
 
 async function fetchProfile(userId: string) {
@@ -24,7 +25,7 @@ async function fetchProfile(userId: string) {
     return res.data;
 }
 
-export function DesignCard({ design }: DesignCardProps) {
+export function DesignCard({ design, priority = false }: DesignCardProps) {
     const { isAuthenticated } = useAuthStore();
     const [isLiked, setIsLiked] = useState(design.stats?.is_liked_by_me || false);
     const [likesCount, setLikesCount] = useState(design.stats?.likes || 0);
@@ -32,7 +33,7 @@ export function DesignCard({ design }: DesignCardProps) {
     const { data: author } = useQuery({
         queryKey: ["profile", design.user_id],
         queryFn: () => fetchProfile(design.user_id),
-        enabled: !!design.user_id,
+        enabled: !!design.user_id && !design.author,
         staleTime: 60000 * 5, // Cache for 5 min to avoid hammer
         retry: false
     });
@@ -77,6 +78,7 @@ export function DesignCard({ design }: DesignCardProps) {
                             height={500} // Aspect ratio handled by Masonry usually, but width/height needed for NextImage. 
                             // Ideally we use a wrapper with styling or known aspect ratio.
                             className="w-full h-auto object-cover"
+                            priority={priority}
                         />
                     ) : (
                         <div className="w-full h-64 bg-muted flex items-center justify-center text-muted-foreground">
@@ -112,6 +114,10 @@ export function DesignCard({ design }: DesignCardProps) {
                         <div className="flex items-center gap-1">
                             <Eye className="h-3 w-3" />
                             <span>{design.stats?.views || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <MessageCircle className="h-3 w-3" />
+                            <span>{design.stats?.comments || 0}</span>
                         </div>
                         <div className="flex items-center gap-1">
                             <Heart className="h-3 w-3" />

@@ -106,6 +106,7 @@ export function FileUpload({ value = [], onChange, className, disabled, maxFiles
                                     alt={`Upload ${index + 1}`}
                                     fill
                                     className="object-cover"
+                                    sizes="(max-width: 768px) 50vw, 25vw"
                                 />
                             ) : (
                                 <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">

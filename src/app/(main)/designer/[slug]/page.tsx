@@ -4,7 +4,7 @@ import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
-import { Profile, PaginatedResponse, Design } from "@/lib/types";
+import { Profile, PaginatedResponse, Design, DesignerProfile } from "@/lib/types";
 import { DesignerHeader } from "@/components/designer/designer-header";
 import { DesignerStats } from "@/components/designer/designer-stats";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import { DesignCard } from "@/components/main/design-card";
 async function fetchProfileByUsername(username: string) {
     // Try standard REST pattern
     try {
-        const res = await apiClient.get<Profile>(`/profiles/by-username/${username}`);
+        const res = await apiClient.get<DesignerProfile>(`/profiles/by-username/${username}`);
         return res.data;
     } catch (error) {
         // Fallback or specific error handling can go here
@@ -27,15 +27,8 @@ async function fetchProfileByUsername(username: string) {
     }
 }
 
-// Fetch stats (Mocked or real)
-async function fetchStats(id: string) {
-    try {
-        const res = await apiClient.get(`/profiles/${id}/stats`);
-        return res.data;
-    } catch (e) {
-        return null; // Return null to indicate missing endpoint
-    }
-}
+// fetchStats removed as it is now embedded in profile
+
 
 export default function DesignerPage() {
     const params = useParams();
@@ -47,12 +40,6 @@ export default function DesignerPage() {
         queryFn: () => fetchProfileByUsername(username),
         enabled: !!username,
         retry: 1,
-    });
-
-    const { data: statsData, isLoading: isStatsLoading } = useQuery({
-        queryKey: ["profile-stats", profile?.id],
-        queryFn: () => fetchStats(profile!.id),
-        enabled: !!profile?.id,
     });
 
     // We will get the real design count from the infinite query
@@ -74,9 +61,9 @@ export default function DesignerPage() {
 
     // Merge backend stats with frontend calculations if needed
     const displayStats = {
-        total_designs: Math.max(statsData?.total_designs || 0, totalDesigns),
-        total_likes: statsData?.total_likes || 0,
-        total_views: statsData?.total_views || 0,
+        total_designs: Math.max(profile.stats?.total_designs || 0, totalDesigns),
+        total_likes: profile.stats?.total_likes || 0,
+        total_views: profile.stats?.total_views || 0,
     };
 
     return (
@@ -93,8 +80,7 @@ export default function DesignerPage() {
             <DesignerHeader profile={profile} />
 
             {/* Stats Dashboard */}
-            {/* We pass isLoading=false once profile is loaded because we default to 0s if stats endpoint fails */}
-            <DesignerStats stats={displayStats} isLoading={isStatsLoading && !statsData} />
+            <DesignerStats stats={displayStats} isLoading={false} />
 
             <Separator />
 
@@ -103,14 +89,14 @@ export default function DesignerPage() {
                 <h2 className="text-2xl font-semibold text-center">Portfolio</h2>
 
                 <div className="min-h-[400px]">
-                    <MasonryGridOverride userId={profile.id} onTotalChange={setTotalDesigns} />
+                    <MasonryGridOverride userId={profile.id} initialDesigns={profile.designs} onTotalChange={setTotalDesigns} />
                 </div>
             </div>
         </div>
     );
 }
 
-function MasonryGridOverride({ userId, onTotalChange }: { userId: string, onTotalChange: (total: number) => void }) {
+function MasonryGridOverride({ userId, initialDesigns, onTotalChange }: { userId: string, initialDesigns?: PaginatedResponse<Design>, onTotalChange: (total: number) => void }) {
     const { ref, inView } = useInView();
 
     const {
@@ -119,6 +105,7 @@ function MasonryGridOverride({ userId, onTotalChange }: { userId: string, onTota
         hasNextPage,
         isFetchingNextPage,
         status,
+        isLoading,
     } = useInfiniteQuery({
         queryKey: ["designs", "user", userId], // Unique key
         queryFn: async ({ pageParam = 0 }) => {
@@ -132,6 +119,7 @@ function MasonryGridOverride({ userId, onTotalChange }: { userId: string, onTota
             return res.data;
         },
         initialPageParam: 0,
+        initialData: initialDesigns ? { pages: [initialDesigns], pageParams: [0] } : undefined,
         getNextPageParam: (lastPage, allPages) => {
             const nextSkip = allPages.length * 20;
             return nextSkip < lastPage.total ? allPages.length : undefined;
@@ -151,7 +139,7 @@ function MasonryGridOverride({ userId, onTotalChange }: { userId: string, onTota
         }
     }, [data?.pages, onTotalChange]);
 
-    if (status === "pending") return <div className="text-center py-10">Loading portfolio...</div>;
+    if (isLoading) return <div className="text-center py-10">Loading portfolio...</div>;
 
     const designs = data?.pages.flatMap((page) => page.items) || [];
 
