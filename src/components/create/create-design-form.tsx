@@ -22,11 +22,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { FileUpload } from "./file-upload";
 import { apiClient } from "@/lib/api-client";
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
 const createDesignSchema = z.object({
     title: z.string().min(3, "Title must be at least 3 characters").max(100),
-    description: z.string().min(10, "Description must be at least 10 characters"),
-    materials: z.string().min(1, "Please list at least one material"),
-    files: z.array(z.instanceof(File)).min(1, "At least one image is required").max(5, "Max 5 images allowed"),
+    description: z.string().min(10, "Description must be at least 10 characters").max(5000, "Description cannot exceed 5000 characters"),
+    materials: z.string().min(1, "Please list at least one material").max(500, "Materials cannot exceed 500 characters"),
+    files: z.array(z.instanceof(File))
+        .min(1, "At least one image is required")
+        .max(5, "Max 5 images allowed")
+        .refine((files) => files.every((file) => file.size <= MAX_FILE_SIZE), "Each file must be less than 5MB"),
 });
 
 type CreateDesignValues = z.infer<typeof createDesignSchema>;
@@ -45,41 +50,58 @@ export function CreateDesignForm() {
 
     const onSubmit = async (data: CreateDesignValues) => {
         try {
-            // Step 1: Create Design (JSON)
-            const createRes = await apiClient.post("/designs/", {
-                title: data.title,
-                description: data.description,
-                materials: data.materials
+            const formData = new FormData();
+            formData.append("title", data.title);
+            formData.append("description", data.description);
+            formData.append("materials", data.materials);
+
+            // Append multiple images
+            data.files.forEach((file) => {
+                formData.append("images", file);
             });
 
-            const designId = createRes.data.id;
-
-            // Step 2: Upload Images (Multipart) in Parallel
-            const uploadPromises = data.files.map((file, index) => {
-                const formData = new FormData();
-                formData.append("file", file);
-
-                // If the API supports ordering or setting primary, we could add logic here.
-                // Assuming first is primary or backend handles it.
-                return apiClient.post(`/designs/${designId}/images`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+            // Single atomic request
+            const response = await apiClient.post("/designs/", formData, {
+                headers: {
+                    // Browser sets multipart/form-data with boundary automatically
+                    // We just need to ensure we don't force application/json
+                    'Content-Type': 'multipart/form-data',
+                }
             });
 
-            await Promise.all(uploadPromises);
+            const designId = response.data.id;
 
             toast.success("Design created successfully!");
             router.push(`/design/${designId}`);
             router.refresh();
 
         } catch (error: any) {
-            console.error("Upload error:", error);
-            const msg = error?.response?.data?.detail
-                ? (Array.isArray(error.response.data.detail)
-                    ? error.response.data.detail[0]?.msg
-                    : error.response.data.detail)
-                : "Failed to create design. Please try again.";
-            toast.error(msg);
+            console.error("Creation failed:", error);
+
+            // Handle Structured Errors (RFC 7807 inspired)
+            const detail = error?.response?.data?.detail;
+
+            if (typeof detail === 'object' && detail !== null && 'code' in detail) {
+                switch (detail.code) {
+                    case "MIN_IMAGES_REQUIRED":
+                        toast.error("Please upload at least one image.");
+                        break;
+                    case "MAX_IMAGES_EXCEEDED":
+                        toast.error("You cannot upload more than 5 images.");
+                        break;
+                    case "FILE_TOO_LARGE":
+                        toast.error("One or more files exceed the 5MB limit.");
+                        break;
+                    default:
+                        toast.error(detail.message || "An error occurred");
+                }
+            } else if (typeof detail === 'string') {
+                toast.error(detail);
+            } else if (Array.isArray(detail)) {
+                toast.error(detail[0]?.msg || "Validation error");
+            } else {
+                toast.error("Failed to create design. Please try again.");
+            }
         }
     };
 

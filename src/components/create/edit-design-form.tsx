@@ -26,11 +26,15 @@ import { apiClient } from "@/lib/api-client";
 import { Design, DesignImage } from "@/lib/types";
 import { getImageUrl } from "@/lib/utils";
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
 const editDesignSchema = z.object({
     title: z.string().min(3, "Title must be at least 3 characters").max(100),
-    description: z.string().min(10, "Description must be at least 10 characters"),
-    materials: z.string().min(1, "Please list at least one material"),
-    files: z.array(z.instanceof(File)).optional(),
+    description: z.string().min(10, "Description must be at least 10 characters").max(5000, "Description cannot exceed 5000 characters"),
+    materials: z.string().min(1, "Please list at least one material").max(500, "Materials cannot exceed 500 characters"),
+    files: z.array(z.instanceof(File))
+        .optional()
+        .refine((files) => !files || files.every((file) => file.size <= MAX_FILE_SIZE), "Each file must be less than 5MB"),
 });
 
 type EditDesignValues = z.infer<typeof editDesignSchema>;
@@ -58,14 +62,27 @@ export function EditDesignForm({ design }: EditDesignFormProps) {
     const remainingSlots = 5 - existingImages.length;
 
     const handleDeleteImage = async (imageId: string) => {
+        if (existingImages.length <= 1) {
+            toast.error("Cannot delete the last image of a design");
+            return;
+        }
+
         setIsDeleting(imageId);
         try {
             await apiClient.delete(`/designs/${design.id}/images/${imageId}`);
             setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
             toast.success("Image removed");
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to delete image:", error);
-            toast.error("Failed to delete image");
+            const detail = error?.response?.data?.detail;
+
+            if (typeof detail === 'object' && detail?.code === "CANNOT_DELETE_LAST_IMAGE") {
+                toast.error("Cannot delete the last image of a design");
+            } else if (typeof detail === 'object' && detail?.message) {
+                toast.error(detail.message);
+            } else {
+                toast.error("Failed to delete image");
+            }
         } finally {
             setIsDeleting(null);
         }
@@ -98,12 +115,28 @@ export function EditDesignForm({ design }: EditDesignFormProps) {
 
         } catch (error: any) {
             console.error("Update error:", error);
-            const msg = error?.response?.data?.detail
-                ? (Array.isArray(error.response.data.detail)
-                    ? error.response.data.detail[0]?.msg
-                    : error.response.data.detail)
-                : "Failed to update design. Please try again.";
-            toast.error(msg);
+
+            // Handle Structured Errors (RFC 7807 inspired)
+            const detail = error?.response?.data?.detail;
+
+            if (typeof detail === 'object' && detail !== null && 'code' in detail) {
+                switch (detail.code) {
+                    case "FILE_TOO_LARGE":
+                        toast.error("One or more files exceed the 5MB limit.");
+                        break;
+                    case "MAX_IMAGES_EXCEEDED":
+                        toast.error("You cannot have more than 5 images total.");
+                        break;
+                    default:
+                        toast.error(detail.message || "An error occurred");
+                }
+            } else if (typeof detail === 'string') {
+                toast.error(detail);
+            } else if (Array.isArray(detail)) {
+                toast.error(detail[0]?.msg || "Validation error");
+            } else {
+                toast.error("Failed to update design. Please try again.");
+            }
         }
     };
 
@@ -135,7 +168,7 @@ export function EditDesignForm({ design }: EditDesignFormProps) {
                                             size="icon"
                                             className="h-6 w-6 rounded-full"
                                             onClick={() => handleDeleteImage(img.id)}
-                                            disabled={!!isDeleting}
+                                            disabled={!!isDeleting || existingImages.length <= 1}
                                         >
                                             {isDeleting === img.id ? (
                                                 <Loader2 className="h-3 w-3 animate-spin" />
