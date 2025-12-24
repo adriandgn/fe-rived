@@ -40,11 +40,31 @@ export interface DesignStats {
     is_liked_by_me: boolean;
 }
 
+export interface Piece {
+    id: string;
+    name: string;
+    category: string;
+}
+
+export interface Style {
+    id: string;
+    name: string;
+    category: string;
+}
+
+export interface Material {
+    id: string;
+    name: string;
+    category: string;
+}
+
 export interface Design {
     id: string;
     title: string;
     description: string;
-    materials: string;
+    piece: Piece;
+    styles: Style[];
+    materials: Material[];
     created_at: string;
     user_id: string;
     images: DesignImage[];

@@ -133,7 +133,7 @@ export function DesignsTable({ designs }: DesignsTableProps) {
                                         <div className="flex flex-col gap-1">
                                             <span className="font-medium">{design.title}</span>
                                             <span className="text-xs text-muted-foreground line-clamp-1 max-w-[200px]">
-                                                {design.description}
+                                                {design.piece?.name}
                                             </span>
                                             <span className="text-[10px] text-muted-foreground">
                                                 {new Date(design.created_at).toLocaleDateString()}
@@ -142,12 +142,12 @@ export function DesignsTable({ designs }: DesignsTableProps) {
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                            {design.materials.split(',').slice(0, 3).map((mat, i) => (
-                                                <Badge key={i} variant="secondary" className="text-[10px] px-1 py-0 h-5">
-                                                    {mat.trim()}
+                                            {design.materials?.slice(0, 3).map((mat) => (
+                                                <Badge key={mat.id} variant="secondary" className="text-[10px] px-1 py-0 h-5">
+                                                    {mat.name}
                                                 </Badge>
                                             ))}
-                                            {design.materials.split(',').length > 3 && (
+                                            {(design.materials?.length || 0) > 3 && (
                                                 <span className="text-[10px] text-muted-foreground">...</span>
                                             )}
                                         </div>

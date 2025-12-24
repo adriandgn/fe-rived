@@ -22,12 +22,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { FileUpload } from "./file-upload";
 import { apiClient } from "@/lib/api-client";
 
+import { useQuery } from "@tanstack/react-query";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { Piece, Style, Material } from "@/lib/types";
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const createDesignSchema = z.object({
     title: z.string().min(3, "Title must be at least 3 characters").max(100),
     description: z.string().min(10, "Description must be at least 10 characters").max(5000, "Description cannot exceed 5000 characters"),
-    materials: z.string().min(1, "Please list at least one material").max(500, "Materials cannot exceed 500 characters"),
+    piece: z.string().min(1, "Please select a piece type"),
+    styles: z.array(z.string()).min(1, "Please select at least one style"),
+    materials: z.array(z.string()).min(1, "Please select at least one material"),
     files: z.array(z.instanceof(File))
         .min(1, "At least one image is required")
         .max(5, "Max 5 images allowed")
@@ -38,12 +51,23 @@ type CreateDesignValues = z.infer<typeof createDesignSchema>;
 
 export function CreateDesignForm() {
     const router = useRouter();
+
+    const { data: options, isLoading: isLoadingOptions } = useQuery({
+        queryKey: ["design-options"],
+        queryFn: async () => {
+            const res = await apiClient.get<{ pieces: Piece[], styles: Style[], materials: Material[] }>("/designs/options");
+            return res.data;
+        }
+    });
+
     const form = useForm<CreateDesignValues>({
         resolver: zodResolver(createDesignSchema),
         defaultValues: {
             title: "",
             description: "",
-            materials: "",
+            piece: "",
+            styles: [],
+            materials: [],
             files: [],
         }
     });
@@ -53,7 +77,10 @@ export function CreateDesignForm() {
             const formData = new FormData();
             formData.append("title", data.title);
             formData.append("description", data.description);
-            formData.append("materials", data.materials);
+            formData.append("piece_id", data.piece);
+
+            data.styles.forEach((id) => formData.append("style_ids", id));
+            data.materials.forEach((id) => formData.append("material_ids", id));
 
             // Append multiple images
             data.files.forEach((file) => {
@@ -104,6 +131,14 @@ export function CreateDesignForm() {
             }
         }
     };
+
+    if (isLoadingOptions) {
+        return (
+            <div className="flex justify-center items-center h-48">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        )
+    }
 
     return (
         <Form {...form}>
@@ -162,14 +197,65 @@ export function CreateDesignForm() {
                     )}
                 />
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="piece"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Piece Type</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a piece type" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {options?.pieces.map((piece) => (
+                                            <SelectItem key={piece.id} value={piece.id}>
+                                                {piece.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="styles"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Styles</FormLabel>
+                                <FormControl>
+                                    <MultiSelect
+                                        options={options?.styles.map(s => ({ label: s.name, value: s.id })) || []}
+                                        selected={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Select styles"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
                 <FormField
                     control={form.control}
                     name="materials"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Materials Used</FormLabel>
+                            <FormLabel>Materials</FormLabel>
                             <FormControl>
-                                <Input placeholder="e.g. Old Jeans, Thread, Patches (comma separated)" {...field} />
+                                <MultiSelect
+                                    options={options?.materials.map(m => ({ label: m.name, value: m.id })) || []}
+                                    selected={field.value}
+                                    onChange={field.onChange}
+                                    placeholder="Select materials"
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

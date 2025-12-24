@@ -185,7 +185,7 @@ export default function DesignDetailsPage() {
 
                     <Separator />
 
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         <div>
                             <h3 className="font-semibold mb-2">Description</h3>
                             <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
@@ -193,12 +193,34 @@ export default function DesignDetailsPage() {
                             </p>
                         </div>
 
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <h3 className="font-semibold mb-2">Piece Type</h3>
+                                <div className="flex items-center gap-2">
+                                    <span className="px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full">
+                                        {design.piece?.name}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 className="font-semibold mb-2">Styles</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {design.styles?.map((style) => (
+                                        <span key={style.id} className="px-3 py-1 border border-border text-sm rounded-full">
+                                            {style.name}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
                         <div>
                             <h3 className="font-semibold mb-2">Materials Used</h3>
                             <div className="flex flex-wrap gap-2">
-                                {design.materials.split(",").map((tag, i) => (
-                                    <span key={i} className="px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full">
-                                        {tag.trim()}
+                                {design.materials?.map((mat) => (
+                                    <span key={mat.id} className="px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full">
+                                        {mat.name}
                                     </span>
                                 ))}
                             </div>

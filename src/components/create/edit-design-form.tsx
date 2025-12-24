@@ -21,17 +21,29 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { FileUpload } from "./file-upload";
 import { apiClient } from "@/lib/api-client";
 import { Design, DesignImage } from "@/lib/types";
 import { getImageUrl } from "@/lib/utils";
+import { FileUpload } from "./file-upload";
+import { useQuery } from "@tanstack/react-query";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { Piece, Style, Material } from "@/lib/types";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const editDesignSchema = z.object({
     title: z.string().min(3, "Title must be at least 3 characters").max(100),
     description: z.string().min(10, "Description must be at least 10 characters").max(5000, "Description cannot exceed 5000 characters"),
-    materials: z.string().min(1, "Please list at least one material").max(500, "Materials cannot exceed 500 characters"),
+    piece: z.string().min(1, "Please select a piece type"),
+    styles: z.array(z.string()).min(1, "Please select at least one style"),
+    materials: z.array(z.string()).min(1, "Please select at least one material"),
     files: z.array(z.instanceof(File))
         .optional()
         .refine((files) => !files || files.every((file) => file.size <= MAX_FILE_SIZE), "Each file must be less than 5MB"),
@@ -48,12 +60,22 @@ export function EditDesignForm({ design }: EditDesignFormProps) {
     const [existingImages, setExistingImages] = useState<DesignImage[]>(design.images || []);
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
+    const { data: options, isLoading: isLoadingOptions } = useQuery({
+        queryKey: ["design-options"],
+        queryFn: async () => {
+            const res = await apiClient.get<{ pieces: Piece[], styles: Style[], materials: Material[] }>("/designs/options");
+            return res.data;
+        }
+    });
+
     const form = useForm<EditDesignValues>({
         resolver: zodResolver(editDesignSchema),
         defaultValues: {
             title: design.title,
             description: design.description,
-            materials: design.materials,
+            piece: design.piece?.id || "",
+            styles: design.styles?.map(s => s.id) || [],
+            materials: design.materials?.map(m => m.id) || [],
             files: [],
         }
     });
@@ -90,12 +112,16 @@ export function EditDesignForm({ design }: EditDesignFormProps) {
 
     const onSubmit = async (data: EditDesignValues) => {
         try {
-            // Step 1: Update Metadata (PUT)
-            await apiClient.put(`/designs/${design.id}`, {
+            const payload = {
                 title: data.title,
                 description: data.description,
-                materials: data.materials
-            });
+                piece_id: data.piece,
+                style_ids: data.styles,
+                material_ids: data.materials
+            };
+
+            // Step 1: Update Metadata (PUT)
+            await apiClient.put(`/designs/${design.id}`, payload);
 
             // Step 2: Upload new images if any
             if (data.files && data.files.length > 0) {
@@ -139,6 +165,14 @@ export function EditDesignForm({ design }: EditDesignFormProps) {
             }
         }
     };
+
+    if (isLoadingOptions) {
+        return (
+            <div className="flex justify-center items-center h-48">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        )
+    }
 
     return (
         <Form {...form}>
@@ -245,6 +279,52 @@ export function EditDesignForm({ design }: EditDesignFormProps) {
                     )}
                 />
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="piece"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Piece Type</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a piece type" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {options?.pieces.map((piece) => (
+                                            <SelectItem key={piece.id} value={piece.id}>
+                                                {piece.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="styles"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Styles</FormLabel>
+                                <FormControl>
+                                    <MultiSelect
+                                        options={options?.styles.map(s => ({ label: s.name, value: s.id })) || []}
+                                        selected={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Select styles"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
                 <FormField
                     control={form.control}
                     name="materials"
@@ -252,7 +332,12 @@ export function EditDesignForm({ design }: EditDesignFormProps) {
                         <FormItem>
                             <FormLabel>Materials</FormLabel>
                             <FormControl>
-                                <Input {...field} />
+                                <MultiSelect
+                                    options={options?.materials.map(m => ({ label: m.name, value: m.id })) || []}
+                                    selected={field.value}
+                                    onChange={field.onChange}
+                                    placeholder="Select materials"
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
