@@ -28,6 +28,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: "https://api-rived.vercel.app/api/v1/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
